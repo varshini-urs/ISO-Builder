@@ -1,0 +1,249 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    * {box-sizing: border-box;}
+    body { 
+      margin: 0;
+      font-family: Arial, Helvetica, sans-serif;
+    }
+    .header {
+      overflow: hidden;
+      background-color: #cac0c0;
+      padding: 20px 10px;
+    }
+    .header a {
+      float: left;
+      color: black;
+      text-align: center;
+      padding: 12px;
+      text-decoration: none;
+      font-size: 18px; 
+      line-height: 25px;
+      border-radius: 4px;
+    }
+    .header a.logo {
+      font-size: 40px;
+      font-weight: bold;
+    }
+    .header a:hover {
+      background-color: #ddd;
+      color: black;
+    }
+    .header a.active {
+      background-color:  #4ec0ec;
+      color: white;
+    }
+    .header-right {
+      float: right;
+    }
+    
+    @media screen and (max-width: 500px) {
+      .header a {
+        float: none;
+        display: block;
+        text-align: left;
+      }
+      .header-right {
+        float: none;
+      }
+    }
+
+    body {
+      margin: 0;
+      padding: 0;
+    }
+    
+    .button {
+      background-color: whitesmoke;
+      border: none;
+      font-size: 25px;
+      color: black;
+      padding: 20px;
+      width: 340px;
+      text-align: center;
+      -webkit-transition-duration: 0.4s;
+      transition-duration: 0.4s;
+      text-decoration: none;
+      overflow: hidden;
+      cursor: pointer;
+      padding: 25px 30px;
+      border: none;
+      border-radius: 0px;
+      cursor: pointer;
+      font-size: 25px;
+      margin-top: 20px; /* Add margin to push it below the list */
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+    }
+    /* Button hover effect */
+    .button:hover {
+      background-color: lightgreen;
+      color: white; /* Change text color to white when hovered */
+    }
+
+    .button:active:after {
+      padding: 0;
+      margin: 0;
+      opacity: 1;
+      transition: 0s;
+    }
+    .waiting {
+      display: none;
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+    }
+    .waiting img {
+      width: 150px; /* Adjust this value as needed */
+      height: 100px; /* Adjust this value as needed */
+    }
+
+    .success-message {
+      display: none;
+      color: white;
+      background-color: #4CAF50;
+      padding: 15px 20px;
+      border-radius: 5px;
+      font-size: 25px;
+      text-align: center;
+      position: absolute;
+      top: 60%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      z-index: 1000;
+      width: 80%;
+      max-width: 400px;
+    }
+    
+    @media screen and (max-width: 768px) {
+      .container {
+        width: 100%;
+        padding: 20px;
+      }
+    }
+    @media screen and (max-width: 480px) {
+      body {
+        font-size: 14px;
+      }
+    }
+    /* Style for the file list */
+    #fileList {
+      list-style-type: none;
+      padding: 0;
+    }
+
+    /* Style for each file item */
+    #fileList li {
+      background-color: #f9f9f9;
+      padding: 6px;
+      margin-bottom: 5px;
+      border-radius: 5px;
+    }
+
+    /* Hover effect on file item */
+    #fileList li:hover {
+      background-color: #f0f0f0;
+      cursor: pointer;
+    }
+
+  </style>
+  <script src="https://sdk.amazonaws.com/js/aws-sdk-2.283.1.min.js"></script>
+</head>
+<body>
+    <div class="header">
+        <a href="#default" class="logo">ISO Builder</a>
+        <div class="header-right">
+          <a class="active" href="index.html">HOME</a>
+        </div>
+    </div>
+    <div>
+        <h1>List of Files in S3 Bucket</h1>
+        <ul id="fileList"></ul>
+    </div>
+    
+    <script>
+        // Configure the AWS SDK with your credentials and region
+        AWS.config.update({
+            accessKeyId: 'AKIAQ3EGPQ6JIIU5W543',
+            secretAccessKey: '5nO3soIrpw7M/UOEr1wolTDadKn5b9NssLnWQkKU',
+            region: 'ap-south-1'
+        });
+    
+        const s3 = new AWS.S3();
+        const bucketName = 'hpecty';
+    
+        function listFiles() {
+            const params = {
+                Bucket: bucketName
+            };
+    
+            s3.listObjectsV2(params, function(err, data) {
+                if (err) {
+                    console.log(err, err.stack);
+                } else {
+                    displayFiles(data.Contents);
+                }
+            });
+        }
+    
+        function displayFiles(files) {
+            const fileList = document.getElementById('fileList');
+            fileList.innerHTML = '';
+    
+            files.forEach(file => {
+                const listItem = document.createElement('li');
+                listItem.textContent = file.Key;
+                fileList.appendChild(listItem);
+            });
+        }
+    
+        // Call the function to list files when the page loads
+        document.addEventListener('DOMContentLoaded', listFiles);
+    </script>
+    <div id="waitingIcon" class="waiting">
+        <img src="icon gif.gif" alt="Icon">
+    </div>
+            
+    <div id="successMessage" class="success-message">ISO Image Created Successfully!</div>
+    <button class="button" id="downloadButton" onclick="downloadFiles()">Click To Continue</button>
+
+    <script src="wasm_exec.js"></script>
+    <script src="main.wasm"></script>
+    
+    <script>
+        async function downloadFiles() {
+            document.getElementById('waitingIcon').style.display = 'block';
+            document.getElementById('downloadButton').style.display = 'none';
+            
+            try {
+                const response = await fetch("http://localhost:8081/download");
+                const blob = await response.blob();
+                const url = window.URL.createObjectURL(blob);
+                const a = document.createElement("a");
+                a.href = url;
+                a.download = "files.iso";
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+
+                document.getElementById('waitingIcon').style.display = 'none';
+                document.getElementById('successMessage').style.display = 'block';
+                document.getElementById('fileList').style.display = 'none'; // Add this line to hide the file list
+                document.querySelector('h1').style.display = 'none'; // Hide the heading
+            } catch (error) {
+                console.error("Error fetching files:", error);
+                document.getElementById('waitingIcon').style.display = 'none';
+                document.getElementById('downloadButton').style.display = 'block';
+            }
+        }
+    </script>
+     </div>
+  
+</body>
+</html>
